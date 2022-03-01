@@ -1,0 +1,3 @@
+This is a repo for presenting COS data products to internal STScI groups, specifically at the March, 2022 INS/ISSB Meeting.
+
+Please note that this is not a publication level product and is not meant as a external tutorial. For such a tutorial, please see the [COS Notebooks](https://spacetelescope.github.io/COS-Notebooks/). Everything contained here is public information; however, it is condensed for STScI audiences and neither polished nor explained with the level of detail meant for external audiences.
