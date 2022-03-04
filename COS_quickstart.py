@@ -21,7 +21,7 @@ from astropy.io import fits
 from astropy import units as u
 # Plotting
 import matplotlib.pyplot as plt
-%matplotlib inline
+#%matplotlib inline
 
 # %% [markdown]
 # ### We begin by downloading the final spectrum product (`X1DSUM`) of an FUV observation.
