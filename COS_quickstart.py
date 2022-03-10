@@ -1,13 +1,5 @@
 # %% [markdown]
-# # A very intro guide to COS Data
-
-# %% [markdown]
-# ## Start by downloading some data
-# * FUV
-#   * Proposal 15366
-#   * *Andy might recognize this proposal as his COS LP4 Spectral Resolution Program!*
-# * NUV
-#   * Picked at random
+# # A Very Intro Guide to COS Data
 
 # %%
 # Import the necessary libraries
@@ -21,7 +13,17 @@ from astropy.io import fits
 from astropy import units as u
 # Plotting
 import matplotlib.pyplot as plt
-#%matplotlib inline
+%matplotlib inline
+import plotly.express as px
+import plotly.graph_objects as go
+
+# %% [markdown]
+# ## Start by downloading some data
+# * FUV
+#   * Proposal 15366
+#   * *Andy might recognize this proposal as his COS LP4 Spectral Resolution Program!*
+# * NUV
+#   * Picked at random
 
 # %% [markdown]
 # ### We begin by downloading the final spectrum product (`X1DSUM`) of an FUV observation.
@@ -51,8 +53,10 @@ print("FUV X1DSUM Files: \n", fuv_x1dsum_products, "\nFUV ASN Files: \n", fuv_as
 
 # %% [markdown]
 # ### We also want to download an example of the raw data (`RAWTAG`), and the intermediate data step (`CORRTAG`)
-# This is not all the data which went into the final products downloaded above.
-# It corresponds to a single exposure on a single segment of the FUV detector.
+# 
+# Note that we're just condensing the above functions into a more compact form. It's the same content as above.
+# 
+# Also note, this is not all the data which went into the final products downloaded above. It corresponds to a single exposure on a single segment of the FUV detector.
 
 # %%
 rawtag_a = Path(Observations.download_products(
@@ -81,7 +85,7 @@ print(f"\n\nRaw TIME-TAG data from segment A in: {rawtag_a}")
 print(f"Corrected TIME-TAG data from segment A in: {corrtag_a}")
 
 # %% [markdown]
-# ### Finally, let's download an example NUV dataset using astroquery in a more condensed form
+# ### Finally, let's download an example NUV dataset using astroquery in this more condensed form
 
 # %%
 nuv_x1dsum_g230l = Path(Observations.download_products(
@@ -120,25 +124,47 @@ print(f"This is a {hdr1['EXPTIME']} second exposure on segment {hdr0['SEGMENT']}
 raw_data = Table.read(rawtag_a, hdu=1)
 corr_data = Table.read(corrtag_a, hdu=1)
 
-# %%
-raw_data
+# %% [markdown]
+# We can look at a few of the counts to see how the data table is formatted.
+# * First the RAW data
+# * Second the CORR data
+#   * Here th XFULL and YFULL are the fully corrected locations on the detector.
 
 # %%
-corr_data
+raw_data[:10]
+
+# %%
+corr_data[:10]
 
 # %% [markdown]
 # ### Let's take a look at how the counts fell on the detector.
 
 # %%
-# So this runs quickly, limit to first 50k counts
+# So this runs quickly, limit to first 80k counts
+fig = go.Figure()
+fig.add_trace(
+    go.Scattergl(
+        x=raw_data["RAWX"][:80000].astype(float),
+        y=raw_data["RAWY"][:80000].astype(float),
+        mode="markers",
+        name="RAWTAG Data"
+    )
+)
+fig.add_trace(
+    go.Scattergl(
+    x=corr_data["XFULL"][:80000].astype(float),
+    y=corr_data["YFULL"][:80000].astype(float),
+        mode="markers",
+        name="CORRTAG Data"
+    )
+)
 
-plt.figure(figsize=(12,8))
-plt.scatter(raw_data["RAWX"][:50000], raw_data["RAWY"][:50000], s=1, alpha=0.5, label="RAW Data")
-plt.scatter(corr_data["XFULL"][:50000], corr_data["YFULL"][:50000], s=1, alpha=0.8, label="Corrected Data")
-plt.xlabel("Detector X Coordinates")
-plt.ylabel("Detector Y Coordinates")
-plt.legend()
-plt.show()
+fig.update_layout(
+    title="Looking at the raw and corrected counts",
+    xaxis_title="Detector X Coordinates",
+    yaxis_title="Detector Y Coordinates",
+    legend_title="Data type"
+)
 
 # %% [markdown]
 # The power of this type of "`TIME-TAG`"data is that we have more control and information on each individual photon encounter. Because of this we have the ability to...
@@ -147,6 +173,8 @@ plt.show()
 #   * i.e. to remove data taken when the sun was "up" for HST [see DayNight.ipynb](https://spacetelescope.github.io/COS-Notebooks/DayNight.html)
 # * Split apart our data and examine it at different times
 #   * i.e. for a transit [see SplitTag.ipynb](https://spacetelescope.github.io/COS-Notebooks/SplitTag.html)
+# 
+# ![Illustrating the above processes](figures/splittagdaynightfigpic.png "Illustrating the above processes")
 
 # %% [markdown]
 # ### Now let's examine the FUV spectrum
@@ -169,7 +197,7 @@ fuv_g130m
 
 # %%
 # Set up the plot as a single box with size of 10x4 inches, and with a dpi of 100, relevant should we choose to save it:
-fig1, ax = plt.subplots(1,1,figsize=(10,4), dpi = 100)  
+fig1, ax = plt.subplots(1,1,figsize=(10,4), dpi = 200)  
 
 # The next few lines are the core of the cell, where we actually place the data onto the plot:
 ###############
@@ -177,8 +205,8 @@ fig1, ax = plt.subplots(1,1,figsize=(10,4), dpi = 100)
 for i, row in enumerate(fuv_g130m):
     wvln, flux, segment  = row["WAVELENGTH", "FLUX", "SEGMENT"] 
     ax.plot(wvln, flux, # First two arguments are assumed to be the x-data, y-data
-            linestyle = "-", linewidth = 0.25, c = "km"[i], # These parameters specify the look of the connecting line
-            marker = '.', markersize = 2, markerfacecolor = 'r', markeredgewidth = 0, # The marker parameters specify how the data points will look... 
+            linestyle = "-", linewidth = 0.25, c = "kb"[i], # These parameters specify the look of the connecting line
+            marker = '.', markersize = 1, markerfacecolor = 'r', markeredgewidth = 0, # The marker parameters specify how the data points will look... 
                                                                                     # ... if you don't want dots set marker = ''
             label = segment) # The label is an optional parameter which will allow us to create a legend 
                             # this label is useful when there are multiple datasets on the same plot
@@ -218,6 +246,13 @@ plt.show() # Shows all the plot calls in this cell and "clears" the plotting spa
 
 # %% [markdown]
 # ### Finally let's look at some NUV spectra
+# We'll show the structure of the data, then make some plots
+
+# %%
+nuv_tab = Table.read(nuv_x1dsum_g185m)
+nuv_tab
+
+# %% [markdown]
 # Both spectra are of white dwarf stars
 # 1. First the G185M Grating spectrum of GD71
 # 2. Second the G230L Grating spectrum of WD1057+719
@@ -246,6 +281,9 @@ plt.legend(loc = 'upper right') # Adds a legend with the label specified in the 
 plt.tight_layout() # Trims blank space
 plt.show() # Shows all the plot calls in this cell and "clears" the plotting space - must come after any saving you want to do
 
+# %% [markdown]
+# This rather atypical NUV spectrum contains both 1st and 2nd order light from the white dwarf source.
+
 # %%
 nuv_tab = Table.read(nuv_x1dsum_g230l)
 # Set up the plot as a single box with size of 10x4 inches, and with a dpi of 100, relevant should we choose to save it:
@@ -268,8 +306,5 @@ ax.set_ylabel('Flux [$erg\ s^{-1}\ cm^{-2}\ Angstrom^{-1}$]', size = 12) # Adds 
 plt.legend(loc = 'upper right') # Adds a legend with the label specified in the plotting call
 plt.tight_layout() # Trims blank space
 plt.show() # Shows all the plot calls in this cell and "clears" the plotting space - must come after any saving you want to do
-
-# %%
-
 
 
